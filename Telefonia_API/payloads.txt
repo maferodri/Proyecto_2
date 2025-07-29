@@ -1,0 +1,10 @@
+#CREATE USER
+
+{
+  "name": "Mafer",
+  "lastname": "Rodriguez",
+  "email": "mafer@gmail.com",
+  "phone": "504 95415082",
+  "password": "Mafer12@"
+}
+

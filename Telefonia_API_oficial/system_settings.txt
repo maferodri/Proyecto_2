@@ -1,0 +1,9 @@
+Para las horas: 
+
+key "hours_before_changes"
+value "2"
+
+Para el del impuesto: 
+
+key"general_tax"
+value "0.15"

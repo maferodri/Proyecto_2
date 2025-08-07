@@ -3,3 +3,4 @@ pymongo==4.13.2
 uvicorn==0.34.3
 firebase-admin==6.9.0
 python-dotenv
+pytest

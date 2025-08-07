@@ -19,7 +19,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__) 
 
 def initialize_firebase():
-    if firebase_admin.apps:
+    if firebase_admin._apps:
         return
     try:
         firebase_creds_base64 = os.getenv("FIREBASE_CREDENTIALS_BASE64")

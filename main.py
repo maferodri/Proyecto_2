@@ -17,9 +17,35 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO) 
 logger = logging.getLogger(__name__) 
 
+
 @app.get("/")  
 def read_root():
-    return {"Welcome to the app web of Telephony"}
+    return {"status": "healthy", "version": "0.0.0", "service": "telefonia-api"}
+
+@app.get("/health")
+def health_check():
+    try:
+        return{
+            "status": "healthy",
+            "timestamp": "2025-08-06",
+            "service": "telefonia-api",
+            "environment": "production"
+        }
+    except Exception as e:
+        return {"status": "unhealthy", "error": str(e)}    
+    
+@app.get("/ready")
+def readiness_check():
+    try:
+        from utils.mongodb import test_connection
+        db_status = test_connection()
+        return {
+            "status": "ready" if db_status else "not_ready",
+            "database": "connected" if db_status else "disconnected",
+            "service": "telefonia-api"
+        }
+    except Exception as e:
+        return {"status": "not_ready", "error": str(e)}        
 
 
 app.include_router(users_router)

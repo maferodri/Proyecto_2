@@ -1,3 +1,5 @@
+import base64
+import json
 import os 
 import logging 
 import requests 
@@ -16,10 +18,27 @@ from utils.mongodb import get_collection
 logging.basicConfig(level=logging.INFO) 
 logger = logging.getLogger(__name__) 
 
-load_dotenv()
+def initialize_firebase():
+    if firebase_admin.apps:
+        return
+    try:
+        firebase_creds_base64 = os.getenv("FIREBASE_CREDENTIALS_BASE64")
+        if firebase_creds_base64:
+            firebase_creds_json = base64.b64decode(firebase_creds_base64).decode('utf-8')
+            firebase_creds = json.loads(firebase_creds_json)
+            cred = credentials.Certificate(firebase_creds)
+            firebase_admin.initialize_app(cred)
+            logger.info("Firebase initialized with environment variable credentials")
+        else:
+            cred = credentials.Certificate("secrets/telefonia-secreto.json")
+            firebase_admin.initialize_app(cred)    
+            logger.info("Firebase initialized with JSON file")
+            
+    except Exception as e:
+        logger.error(f"Failed to initialized Firebase: {e}")
+        raise HTTPException(status_code=500, detail=f"Firebase configuration error: {str(e)}")        
 
-cred = credentials.Certificate("secrets/telefonia-secreto.json") 
-firebase_admin.initialize_app(cred) 
+initialize_firebase()
 
 users_coll = get_collection("Users") 
 

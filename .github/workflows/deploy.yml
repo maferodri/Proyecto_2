@@ -51,6 +51,6 @@ jobs:
           RAILWAY_TOKEN: ${{secrets.RAILWAY_TOKEN}}
           FIREBASE_CREDENTIALS_BASE64: ${{secrets.FIREBASE_CREDENTIALS_BASE64}}
         run: |
-          pytest --fixtures test_database.py
+          pytest -v test_database.py
 
 

@@ -8,7 +8,7 @@ from fastapi import HTTPException
 
 load_dotenv()
 
-SECRET_KEY = os.getenv("SECRETE_KEY") 
+SECRET_KEY = os.getenv("SECRET_KEY") 
 
 def create_jwt_token( 
         firstname:str

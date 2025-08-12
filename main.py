@@ -12,6 +12,16 @@ from routes.orders import router as orders_router
 
 app = FastAPI()  
 
+#Add CORS
+from fastapi.middleware.cors import CORSMiddleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credential=True, 
+    allow_methods=["*"],
+    allow_headers=["*"], 
+)
+
 load_dotenv() 
 
 logging.basicConfig(level=logging.INFO) 

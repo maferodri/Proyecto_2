@@ -37,9 +37,6 @@ async def get_services(filtro: Optional[str] = None, include_inactive: bool = Fa
     try:
         query = get_service_filter_pipeline(filtro) or {}
         # Solo filtra activos cuando NO nos piden incluir inactivos
-        if not include_inactive:
-            query["active"] = True
-
         services = []
         for doc in coll.find(query):
             doc["id"] = str(doc["_id"])

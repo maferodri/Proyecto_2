@@ -7,7 +7,7 @@ from firebase_admin import auth as firebase_auth
 
 from controllers.appointment import(
     create_appointment_users,
-    get_appointments_admin,
+    get_appointments,
     get_appointment_by_id,
     update_appointment,
     disable_appointment
@@ -22,9 +22,9 @@ async def create_appointment_endpoint(request:Request, appointment: Appointment)
 
 
 @router.get("/appointments", response_model=dict, tags=["🗓️ Appointments"])
-@validate_admin
+@validate_user
 async def get_appointment_lookup_endpoint(request: Request) -> dict:
-    return await get_appointments_admin()
+    return await get_appointments()
 
 @router.get("/appointments/{appointment_id}", response_model=dict, tags=["🗓️ Appointments"])
 @validate_admin

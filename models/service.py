@@ -25,3 +25,7 @@ class Service(BaseModel):
         description="Costo del servicio",
         gt=0
     )
+
+    active: Optional[bool] = Field(
+        default=True
+    )

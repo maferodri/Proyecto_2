@@ -5,7 +5,10 @@ from utils.security import validate_admin
 
 from controllers.service import(
     create_service,
-    get_services
+    get_services,
+    get_service_by_id,
+    update_service,
+    deactivate_service
 )
 
 router = APIRouter()
@@ -21,3 +24,17 @@ async def get_services_querystring_endpoint(
     filtro: Optional[str] = Query(default=None, description="Buscar por nombre o descripción")
 ) -> list[Service]:
     return await get_services(filtro)
+
+@router.get("/services/{service_id}", response_model=Service, tags=["🛠️ Service"])
+async def get_service_by_id_endpoint(request: Request, service_id: str) -> Service:
+    return await get_service_by_id(service_id)
+
+@router.put("/services/{service_id}", response_model=Service, tags=["🛠️ Service"])
+@validate_admin
+async def update_service_endpoint(request: Request, service_id: str, service: Service) -> Service:
+    return await update_service(service_id, service, request)
+
+@router.delete("/services/{service_id}", response_model=dict, tags=["🛠️ Service"])
+@validate_admin
+async def deactivate_service_endpoint(request: Request, service_id: str) -> dict:
+    return await deactivate_service(service_id, request)

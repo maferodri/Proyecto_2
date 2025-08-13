@@ -20,20 +20,16 @@ def date_appointment_pipeline(date_appointment: datetime) -> list:
 
 
 def get_user_appointments_pipeline(user_oid: ObjectId, skip: int = 0, limit: int = 10) -> list:
-    """
-    Citas del usuario autenticado (active=True), ordenadas por creación desc, con paginación.
-    Soporta user_id guardado como ObjectId o como string.
-    """
     return [
         {
             "$match": {
                 "active": True,
                 "$or": [
-                    {"user_id": user_oid},  # si está guardado como ObjectId
+                    {"user_id": user_oid},
                     {
                         "$expr": {
                             "$eq": [
-                                {"$toObjectId": "$user_id"},  # si está guardado como string
+                                {"$toObjectId": "$user_id"},
                                 user_oid
                             ]
                         }
@@ -41,29 +37,66 @@ def get_user_appointments_pipeline(user_oid: ObjectId, skip: int = 0, limit: int
                 ]
             }
         },
-        {"$sort": {"date_creation": -1}},
-        {"$skip": int(skip)},
-        {"$limit": int(limit)},
         {
             "$addFields": {
-                "id": {"$toString": "$_id"},
-                "user_id": {
+                "user_id_obj": {
                     "$cond": [
                         {"$eq": [{"$type": "$user_id"}, "objectId"]},
-                        {"$toString": "$user_id"},
-                        "$user_id"
+                        "$user_id",
+                        {"$toObjectId": "$user_id"}
                     ]
                 }
             }
         },
         {
+            "$lookup": {
+                "from": "Users",  # <-- cámbialo a "users" si tu colección es minúscula
+                "localField": "user_id_obj",
+                "foreignField": "_id",
+                "as": "user_info"
+            }
+        },
+        {"$unwind": "$user_info"},
+        # Si quieres ocultar citas de usuarios inactivos, deja este match; si no, quítalo
+        {"$match": {"user_info.active": True}},
+
+        {"$sort": {"date_creation": -1}},
+        {"$skip": int(skip)},
+        {"$limit": int(limit)},
+
+        {
             "$project": {
                 "_id": 0,
-                "id": 1,
+                "id": {"$toString": "$_id"},
+                "user_id": {"$toString": "$user_id"},
                 "date_appointment": 1,
                 "date_creation": 1,
-                "comment": "$comment",   # nombre consistente
-                "active": "$active"      # estado de la CITA
+                "comment": "$comment",
+                "active": "$active",
+                "user_name": {
+                    "$let": {
+                        "vars": {
+                            "fullname": {
+                                "$trim": {
+                                    "input": {
+                                        "$concat": [
+                                            {"$ifNull": ["$user_info.firstname", ""]},
+                                            " ",
+                                            {"$ifNull": ["$user_info.lastname", ""]}
+                                        ]
+                                    }
+                                }
+                            }
+                        },
+                        "in": {
+                            "$cond": [
+                                {"$ifNull": ["$user_info.name", False]},
+                                "$user_info.name",
+                                "$$fullname"
+                            ]
+                        }
+                    }
+                }
             }
         }
     ]

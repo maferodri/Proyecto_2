@@ -98,43 +98,44 @@ async def create_appointment_users(request: Request, appointment: Appointment) -
         raise HTTPException(status_code=500, detail=f"Error creating appointment: {str(e)}")
     
 
-async def get_appointments(current_user: dict, skip: int = 0, limit: int = 10) -> dict:
-    """
-    - Admin: devuelve todos los appointments.
-    - Usuario normal: devuelve solo los suyos (user_id).
-    """
+async def get_appointments(request: Request) -> dict:
     try:
-        is_admin = bool(current_user.get("admin"))
-        email = current_user.get("email")
+        # El decorador ya puso estos valores en request.state
+        email = request.state.email
+        is_admin = request.state.admin
 
         if is_admin:
-            pipeline = get_all_appointments_pipeline(skip, limit)
+            pipeline = get_all_appointments_pipeline(0, 10)
             items = list(coll.aggregate(pipeline))
             total = coll.count_documents({"active": True})
         else:
-            # Obtén el user_id desde tu colección users usando el email del token
-            users = get_collection("users")
-            user_doc = users.find_one({"email": email}, {"_id": 1})
+            user_doc = users_coll.find_one({"email": email}, {"_id": 1})
             if not user_doc:
-                # Por seguridad no revelamos si existe o no
-                return {"appointments": [], "total": 0, "skip": skip, "limit": limit}
+                return {"appointments": [], "total": 0, "skip": 0, "limit": 10}
 
-            user_oid = user_doc["_id"]  # ya es ObjectId
-            pipeline = get_user_appointments_pipeline(user_oid, skip, limit)
+            user_oid = user_doc["_id"]
+            pipeline = get_user_appointments_pipeline(user_oid, 0, 10)
             items = list(coll.aggregate(pipeline))
-            total = coll.count_documents({"active": True, "user_id": user_oid})
+            total = coll.count_documents({
+                "active": True,
+                "$or": [
+                    {"user_id": user_oid},
+                    {"user_id": str(user_oid)}
+                ]
+            })
 
         return {
             "appointments": items,
             "total": int(total),
-            "skip": int(skip),
-            "limit": int(limit),
+            "skip": 0,
+            "limit": 10
         }
+
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving appointments: {str(e)}")
-
+    
 #CONTROLADOR PARA OPBTENER LA INFORMACIÓN DE UNA CITA EN ESPECIFICO PARA ADMINS
 async def get_appointment_by_id(appointment_id: str) -> dict:
     try:

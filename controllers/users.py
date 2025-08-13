@@ -117,12 +117,4 @@ async def login(user: Login) -> dict:
     return {
         "message": "Usuario autenticado correctamente",
         "token": token,
-        "user": {
-            "name": user_info.get("name"),
-            "lastname": user_info.get("lastname"),
-            "email": user_info.get("email"),
-            "phone": user_info.get("phone"),
-            "active": user_info.get("active"),
-            "admin": user_info.get("admin"),
-        },
     }

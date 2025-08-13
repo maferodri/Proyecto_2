@@ -57,7 +57,6 @@ def get_user_appointments_pipeline(user_oid: ObjectId, skip: int = 0, limit: int
             "$project": {
                 "_id": 0,
                 "id": 1,
-                "user_id": 1,
                 "date_appointment": 1,
                 "date_creation": 1,
                 "comments": "$comment"

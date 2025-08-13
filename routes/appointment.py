@@ -24,7 +24,7 @@ async def create_appointment_endpoint(request:Request, appointment: Appointment)
 @router.get("/appointments", response_model=dict, tags=["🗓️ Appointments"])
 @validate_user
 async def get_appointment_lookup_endpoint(request: Request) -> dict:
-    return await get_appointments()
+    return await get_appointments(request)
 
 @router.get("/appointments/{appointment_id}", response_model=dict, tags=["🗓️ Appointments"])
 @validate_admin

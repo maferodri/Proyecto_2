@@ -21,9 +21,10 @@ async def create_service_endpoint(request: Request, service: Service) -> Service
 @router.get("/services", response_model=list[Service], tags=["🛠️ Service"])
 async def get_services_querystring_endpoint(
     request: Request,
-    filtro: Optional[str] = Query(default=None, description="Buscar por nombre o descripción")
+    filtro: Optional[str] = Query(default=None, description="Buscar por nombre o descripción"),
+    include_inactive: bool = Query(default=False, description="Incluir servicios inactivos")
 ) -> list[Service]:
-    return await get_services(filtro)
+    return await get_services(filtro, include_inactive)
 
 @router.get("/services/{service_id}", response_model=Service, tags=["🛠️ Service"])
 async def get_service_by_id_endpoint(request: Request, service_id: str) -> Service:

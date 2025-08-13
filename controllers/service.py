@@ -33,10 +33,12 @@ async def create_service(service: Service) -> Service:
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error creating service: {str(e)}")
     
-async def get_services(filtro: Optional[str] = None) -> list[Service]:
+async def get_services(filtro: Optional[str] = None, include_inactive: bool = False) -> list[Service]:
     try:
-        query = get_service_filter_pipeline(filtro)  
-        query["active"] = True
+        query = get_service_filter_pipeline(filtro) or {}
+        # Solo filtra activos cuando NO nos piden incluir inactivos
+        if not include_inactive:
+            query["active"] = True
 
         services = []
         for doc in coll.find(query):
@@ -52,7 +54,8 @@ async def get_service_by_id(service_id: str) -> Service:
         if not ObjectId.is_valid(service_id):
             raise HTTPException(status_code=400, detail="Invalid service ID format")
 
-        doc = coll.find_one({"_id": ObjectId(service_id), "active": True})
+        # Quita el filtro de "active": True
+        doc = coll.find_one({"_id": ObjectId(service_id)})
         if not doc:
             raise HTTPException(status_code=404, detail="Service not found")
 

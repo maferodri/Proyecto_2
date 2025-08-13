@@ -183,7 +183,7 @@ async def update_appointment(appointment_id: str, appointment: Appointment, requ
                 hours_change = hours_result["value"]
             else: 
                 print("DEBUG: No se encontro las horas que se pueden cambiar")    
-                hours_change=24
+                hours_change=2
 
             time_now = datetime.utcnow()
             if current_appointment_datetime - time_now < timedelta(hours=hours_change):

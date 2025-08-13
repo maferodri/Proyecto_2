@@ -68,36 +68,61 @@ async def create_user(user : User)  -> User:
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
     
     
-async def login(user: Login) -> dict: 
-    api_key = os.getenv("FIREBASE_API_KEY") 
+async def login(user: Login) -> dict:
+    api_key = os.getenv("FIREBASE_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="Config de autenticación incompleta")
+
     url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={api_key}"
-    
-    payload = { 
-        "email": user.email
-        , "password": user.password
-        , "returnSecureToken": True 
+    payload = {
+        "email": user.email,
+        "password": user.password,
+        "returnSecureToken": True
     }
-    
-    response = requests.post(url, json=payload) 
-    response_data = response.json() 
-    
-    if "error" in response_data: 
-        raise HTTPException( 
-            status_code=400
-            , detail= "Error in autenticating the user"
-        )
-    user_info = users_coll.find_one({ "email": user.email })  
-    logger.info( user_info["name"]) #
-    
-    return { 
-        "message": "Usuario Autenticado correctamente" 
-        , "idToken": create_jwt_token( 
-            user_info["name"]
-            , user_info["lastname"]
-            , user_info["email"]
-            , user_info["phone"]
-            , user_info["active"]
-            , user_info["admin"]
-        )
+
+    try:
+        resp = requests.post(url, json=payload, timeout=8)  # requests es sync; OK si lo aceptas
+    except requests.RequestException:
+        # Error de red/timeout con Firebase
+        raise HTTPException(status_code=502, detail="Error de conexión con el proveedor de auth")
+
+    data = resp.json() if resp.content else {}
+
+    # Si Firebase responde error
+    if resp.status_code != 200 or "error" in data:
+        code = data.get("error", {}).get("message", "")
+        # Mapa de errores más comunes de Firebase
+        if code in ("EMAIL_NOT_FOUND", "INVALID_PASSWORD"):
+            raise HTTPException(status_code=401, detail="Credenciales inválidas")
+        if code == "USER_DISABLED":
+            raise HTTPException(status_code=403, detail="Usuario deshabilitado")
+        # Otros errores (p.ej. TOO_MANY_ATTEMPTS_TRY_LATER, OPERATION_NOT_ALLOWED, etc.)
+        raise HTTPException(status_code=502, detail="Error al iniciar sesión. Intenta más tarde.")
+
+    # Buscar usuario en tu base (puede no existir aunque Firebase haya autenticado)
+    user_info = users_coll.find_one({"email": user.email})
+    if not user_info:
+        # Decide si esto es 404 o 401; aquí 401 para no filtrar existencia
+        raise HTTPException(status_code=401, detail="Credenciales inválidas")
+
+    token = create_jwt_token(
+        user_info.get("name"),
+        user_info.get("lastname"),
+        user_info.get("email"),
+        user_info.get("phone"),
+        user_info.get("active"),
+        user_info.get("admin"),
+    )
+
+    return {
+        "message": "Usuario autenticado correctamente",
+        "token": token,
+        "user": {
+            "name": user_info.get("name"),
+            "lastname": user_info.get("lastname"),
+            "email": user_info.get("email"),
+            "phone": user_info.get("phone"),
+            "active": user_info.get("active"),
+            "admin": user_info.get("admin"),
+        },
     }
-        

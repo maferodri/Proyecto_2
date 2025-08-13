@@ -15,15 +15,56 @@ def date_appointment_pipeline(date_appointment: datetime) -> list:
         {"$count": "count"}
     ]
 
-def get_user_appointments_pipeline(user_object_id):
+def get_user_appointments_pipeline(user_oid: ObjectId, skip: int = 0, limit: int = 10) -> list:
+    """
+    Solo citas del usuario (soporta user_id guardado como ObjectId o como string).
+    Incluye active=True, orden por date_creation desc, paginación y esquema homogéneo.
+    """
     return [
-        {"$match": {"user_id": user_object_id}},
-        {"$addFields": {
-            "id": {"$toString": "$_id"},
-            "user_id": {"$toString": "$user_id"}
-        }},
-        {"$project": {"_id": 0}}  # quitamos el _id original
+        # match por user_id ya sea ObjectId o string convertible
+        {
+            "$match": {
+                "active": True,
+                "$or": [
+                    {"user_id": user_oid},  # si está guardado como ObjectId
+                    {
+                        "$expr": {
+                            "$eq": [
+                                {"$toObjectId": "$user_id"},  # si está como string
+                                user_oid
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        {"$sort": {"date_creation": -1}},
+        {"$skip": int(skip)},
+        {"$limit": int(limit)},
+        {
+            "$addFields": {
+                "id": {"$toString": "$_id"},
+                "user_id": {
+                    "$cond": [
+                        {"$eq": [{"$type": "$user_id"}, "objectId"]},
+                        {"$toString": "$user_id"},
+                        "$user_id"
+                    ]
+                }
+            }
+        },
+        {
+            "$project": {
+                "_id": 0,
+                "id": 1,
+                "user_id": 1,
+                "date_appointment": 1,
+                "date_creation": 1,
+                "comments": "$comment"
+            }
+        }
     ]
+
 
 
 def get_all_appointments_pipeline(skip: int = 0, limit: int = 10) -> list:

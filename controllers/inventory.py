@@ -122,11 +122,11 @@ async def update_inventory(inventory_id: str, inventory: Inventory) -> Inventory
 
 async def deactivate_inventory(inventory_id: str) -> dict:
     try:
-        res = coll.update_one({"_id": ObjectId(inventory_id)}, {"$set": {"active": False}})
-        if res.modified_count == 0:
+        res = coll.delete_one({"_id": ObjectId(inventory_id)})
+        if res.deleted_count == 0:
             raise HTTPException(status_code=404, detail="Inventory not found")
-        return {"message": "Inventory item deactivated"}
+        return {"message": "Inventory item deleted successfully"}
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error deactivating inventory: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error deleting inventory: {str(e)}")

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request
-from models.inventory_type import InventoryType
-from controllers.inventory_type import (
+from models.inventorytypes import InventoryType
+from controllers.inventorytypes import (
     create_inventory_type,
     get_inventory_types,
     get_inventory_type_by_id,
@@ -17,10 +17,12 @@ async def create_inventory_type_endpoint(request: Request, inv_type: InventoryTy
     return await create_inventory_type(inv_type)
 
 @router.get("/inventorytypes", response_model=list)
+@validate_user
 async def get_inventory_types_endpoint(request: Request) -> list:
     return await get_inventory_types()
 
 @router.get("/inventorytypes/{inv_type_id}", response_model=InventoryType)
+@validate_user
 async def get_inventory_type_by_id_endpoint(request: Request, inv_type_id: str) -> InventoryType:
     return await get_inventory_type_by_id(inv_type_id)
 

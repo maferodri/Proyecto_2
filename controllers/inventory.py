@@ -11,8 +11,8 @@ from pipelines.inventory_pipelines import (
     get_inventories_by_type_name_pipeline
 )
 
-coll = get_collection("inventories")
-inventory_types_coll = get_collection("inventorytypes")
+coll = get_collection("Inventory")
+inventory_types_coll = get_collection("Inventorytypes")
 
 async def create_inventory(inventory: Inventory) -> Inventory:
     try:

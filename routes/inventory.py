@@ -1,13 +1,13 @@
 from fastapi import APIRouter, Request
 from models.inventory import Inventory
-from controllers.inventories import (
+from controllers.inventory import (
     create_inventory,
     get_inventories,
     get_inventory_by_id,
     update_inventory,
     deactivate_inventory
 )
-from utils.security import validate_user, validate_admin
+from utils.security import validate_user, validate_admin  
 
 router = APIRouter(tags=["📦 Inventories"])
 

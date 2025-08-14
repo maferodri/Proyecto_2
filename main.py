@@ -9,8 +9,8 @@ from routes.states import router as states_router
 from routes.appointment import router as appointment_router
 from routes.services import router as service_router
 from routes.orders import router as orders_router
-from routes.inventories import router as inventories_router
-from routes.inventory_types import router as inventorytypes_router
+from routes.inventory import router as inventory_router
+from routes.inventorytypes import router as inventorytypes_router
 
 app = FastAPI()  
 
@@ -65,7 +65,7 @@ app.include_router(states_router)
 app.include_router(appointment_router)
 app.include_router(service_router)
 app.include_router(orders_router)
-app.include_router(inventories_router)
+app.include_router(inventory_router)
 app.include_router(inventorytypes_router)
 
 if __name__ == "__main__":

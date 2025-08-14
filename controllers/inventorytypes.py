@@ -1,4 +1,4 @@
-from models.inventory_type import InventoryType
+from models.inventorytypes import InventoryType
 from utils.mongodb import get_collection
 from fastapi import HTTPException
 from bson import ObjectId

@@ -17,12 +17,10 @@ async def create_inventory_endpoint(request: Request, inventory: Inventory) -> I
     return await create_inventory(inventory)
 
 @router.get("/inventories", response_model=dict)
-@validate_user
 async def get_inventories_endpoint(skip: int = 0, limit: int = 1000) -> dict:
     return await get_inventories(skip, limit)
 
 @router.get("/inventories/{inventory_id}", response_model=dict)
-@validate_user
 async def get_inventory_by_id_endpoint(inventory_id: str) -> dict:
     return await get_inventory_by_id(inventory_id)
 

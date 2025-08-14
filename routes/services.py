@@ -1,7 +1,7 @@
 from typing import Optional
 from fastapi import APIRouter, Query, Request
 from models.service import Service
-from utils.security import validate_admin
+from utils.security import validate_admin, validate_user
 
 from controllers.service import(
     create_service,
@@ -14,7 +14,7 @@ from controllers.service import(
 router = APIRouter()
 
 @router.post("/services", response_model=Service, tags=["🛠️ Service"])
-@validate_admin
+@validate_user
 async def create_service_endpoint(request: Request, service: Service) -> Service:
     return await create_service(service)
 
@@ -31,11 +31,11 @@ async def get_service_by_id_endpoint(request: Request, service_id: str) -> Servi
     return await get_service_by_id(service_id)
 
 @router.put("/services/{service_id}", response_model=Service, tags=["🛠️ Service"])
-@validate_admin
+@validate_user
 async def update_service_endpoint(request: Request, service_id: str, service: Service) -> Service:
     return await update_service(service_id, service, request)
 
 @router.delete("/services/{service_id}", response_model=dict, tags=["🛠️ Service"])
-@validate_admin
+@validate_user
 async def deactivate_service_endpoint(request: Request, service_id: str) -> dict:
     return await deactivate_service(service_id, request)

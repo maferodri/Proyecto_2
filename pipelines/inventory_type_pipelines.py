@@ -1,70 +1,56 @@
-"""
-Pipelines para InventoryTypes
-"""
 from bson import ObjectId
 
-
-def get_inventory_type_pipeline(skip: int = 0, limit: int = 10) -> list:
+def get_inventory_type_pipeline() -> list:
     """
-    Devuelve todos los tipos de inventario con el conteo de items en 'Inventory'
+    Devuelve tipos de inventario con conteo de items
     """
     return [
-        {
-            "$lookup": {
-                "from": "Inventory",
-                "let": {"typeId": {"$toString": "$_id"}},
-                "pipeline": [
-                    {
-                        "$addFields": {
-                            "id_inventory_type_str": {
-                                "$cond": [
-                                    {"$eq": [{"$type": "$id_inventory_type"}, "objectId"]},
-                                    {"$toString": "$id_inventory_type"},
-                                    "$id_inventory_type"
-                                ]
-                            }
-                        }
-                    },
-                    {
-                        "$match": {
-                            "$expr": {"$eq": ["$id_inventory_type_str", "$$typeId"]}
-                        }
-                    }
-                ],
-                "as": "items"
-            }
-        },
-        {
-            "$project": {
-                "_id": 0,
-                "id": {"$toString": "$_id"},
-                "name": "$name",
-                "active": "$active",
-                "number_of_items": {"$size": "$items"}
-            }
-        },
-        {"$skip": skip},
-        {"$limit": limit}
+        {"$addFields": {
+            "id": {"$toString": "$_id"}
+        }},
+        {"$lookup": {
+            "from": "Inventory",  # Nombre correcto en tu Mongo
+            "localField": "id",
+            "foreignField": "id_inventory_type",
+            "as": "result"
+        }},
+        {"$addFields": {
+            "number_of_items": {"$size": "$result"}  # Siempre presente, aunque sea 0
+        }},
+        {"$project": {
+            "_id": 0,
+            "id": 1,
+            "description": 1,
+            "active": 1,
+            "number_of_items": 1
+        }}
     ]
 
-
-def validate_type_is_assigned_pipeline(inventory_type_id: str) -> list:
+def validate_type_is_assigned_pipeline(id: str) -> list:
     """
-    Valida que un tipo de inventario exista y esté activo
+    Valida si un tipo de inventario tiene items asignados
     """
     return [
-        {
-            "$match": {
-                "_id": ObjectId(inventory_type_id),
-                "active": True
-            }
-        },
-        {
-            "$project": {
-                "_id": 0,
-                "id": {"$toString": "$_id"},
-                "name": "$name",
-                "active": "$active"
-            }
-        }
+        {"$match": {
+            "_id": ObjectId(id)
+        }},
+        {"$addFields": {
+            "id": {"$toString": "$_id"}
+        }},
+        {"$lookup": {
+            "from": "Inventory",
+            "localField": "id",
+            "foreignField": "id_inventory_type",
+            "as": "result"
+        }},
+        {"$addFields": {
+            "number_of_items": {"$size": "$result"}
+        }},
+        {"$project": {
+            "_id": 0,
+            "id": 1,
+            "description": 1,
+            "active": 1,
+            "number_of_items": 1
+        }}
     ]

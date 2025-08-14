@@ -12,7 +12,7 @@ from pipelines.inventory_pipelines import (
 )
 
 coll = get_collection("Inventory")
-inventory_types_coll = get_collection("Inventorytypes")
+inventory_types_coll = get_collection("inventorytypes")
 
 async def create_inventory(inventory: Inventory) -> Inventory:
     try:

@@ -23,4 +23,4 @@ class Inventory(BaseModel):
         description="Creation datetime; server sets it on create"
     )
 
-    active: bool = Field(default=True, description="Is the inventory item active?")
+    active: bool = Field(default=True, description="El elemento del inventario esta activo??")

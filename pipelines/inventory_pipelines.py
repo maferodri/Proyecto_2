@@ -28,7 +28,7 @@ def get_inventory_with_type_pipeline(inventory_id: str) -> list:
         }}
     ]
 
-def get_all_inventories_with_types_pipeline(skip: int = 0, limit: int = 10) -> list:
+def get_all__with_types_pipeline(skip: int = 0, limit: int = 10) -> list:
     return [
         {"$addFields": {"id_inventory_type_obj": {"$toObjectId": "$id_inventory_type"}}},
         {"$lookup": {

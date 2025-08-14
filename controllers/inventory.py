@@ -129,4 +129,4 @@ async def deactivate_inventory(inventory_id: str) -> dict:
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error deleting inventory: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error al eliminar elemento del inventario: {str(e)}")

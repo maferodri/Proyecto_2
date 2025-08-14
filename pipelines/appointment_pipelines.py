@@ -1,23 +1,26 @@
 from datetime import datetime, timedelta
 from bson import ObjectId
 
-def date_appointment_pipeline(date_appointment: datetime) -> list:
+def date_appointment_pipeline(date_appointment: datetime, exclude_id: str = None) -> list:
     """
-    Cuenta citas activas que caen en la ventana +/- 30 min para evitar solapes.
+    Cuenta citas activas que caen en la ventana +/- 30 min para evitar solapes,
+    excluyendo opcionalmente una cita por su ID.
     """
-    return [
-        {
-            "$match": {
-                "date_appointment": {
-                    "$gte": date_appointment - timedelta(minutes=30),
-                    "$lt": date_appointment + timedelta(minutes=30)
-                },
-                "active": True
-            }
+    match_stage = {
+        "date_appointment": {
+            "$gte": date_appointment - timedelta(minutes=30),
+            "$lt": date_appointment + timedelta(minutes=30)
         },
+        "active": True
+    }
+
+    if exclude_id and ObjectId.is_valid(exclude_id):
+        match_stage["_id"] = {"$ne": ObjectId(exclude_id)}
+
+    return [
+        {"$match": match_stage},
         {"$count": "count"}
     ]
-
 
 def get_user_appointments_pipeline(
     user_oid: ObjectId, skip: int = 0, limit: int = 10, include_inactive: bool = True

@@ -100,7 +100,6 @@ async def create_appointment_users(request: Request, appointment: Appointment) -
 
 async def get_appointments(request: Request) -> dict:
     try:
-        # El decorador ya puso estos valores en request.state
         email = request.state.email
         is_admin = request.state.admin
 
@@ -124,6 +123,24 @@ async def get_appointments(request: Request) -> dict:
                 ]
             })
 
+        # 🔹 Mark as inactive if date has passed (and persist to DB)
+        now = datetime.utcnow()
+        for appt in items:
+            try:
+                appt_date = appt.get("date_appointment")
+                if isinstance(appt_date, str):
+                    appt_date = datetime.fromisoformat(appt_date)
+
+                if appt_date and appt_date < now and appt.get("active", True):
+                    appt["active"] = False
+                    # update in DB
+                    coll.update_one(
+                        {"_id": ObjectId(appt["_id"])},
+                        {"$set": {"active": False}}
+                    )
+            except Exception:
+                pass  # ignore date format errors
+
         return {
             "appointments": items,
             "total": int(total),
@@ -135,8 +152,11 @@ async def get_appointments(request: Request) -> dict:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving appointments: {str(e)}")
-    
-#CONTROLADOR PARA OPBTENER LA INFORMACIÓN DE UNA CITA EN ESPECIFICO PARA ADMINS
+
+
+# ==========================
+# Get appointment by ID
+# ==========================
 async def get_appointment_by_id(appointment_id: str) -> dict:
     try:
         pipeline = get_appointment_by_id_pipeline(appointment_id)
@@ -145,12 +165,30 @@ async def get_appointment_by_id(appointment_id: str) -> dict:
         if not result:
             raise HTTPException(status_code=404, detail="Appointment not found")
 
-        return result[0]  
+        appt = result[0]
+
+        # 🔹 Mark as inactive if date has passed (and persist to DB)
+        now = datetime.utcnow()
+        try:
+            appt_date = appt.get("date_appointment")
+            if isinstance(appt_date, str):
+                appt_date = datetime.fromisoformat(appt_date)
+
+            if appt_date and appt_date < now and appt.get("active", True):
+                appt["active"] = False
+                coll.update_one(
+                    {"_id": ObjectId(appointment_id)},
+                    {"$set": {"active": False}}
+                )
+        except Exception:
+            pass
+
+        return appt
+
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching appointment: {str(e)}")
-    
     
 async def update_appointment(appointment_id: str, appointment: Appointment, request:Request) -> Appointment:
         try:
@@ -193,10 +231,10 @@ async def update_appointment(appointment_id: str, appointment: Appointment, requ
                 )
                 
              # Validar que no haya citas solapadas (excluyendo la cita actual)
-            pipeline = date_appointment_pipeline(appointment.date_appointment)
+            pipeline = date_appointment_pipeline(appointment.date_appointment, appointment_id)
             conflicts = list(coll.aggregate(pipeline))
             if conflicts and conflicts[0]["count"] > 0:
-                 raise HTTPException(status_code=400, detail="Another appointment already exists at that time")    
+                 raise HTTPException(status_code=400, detail="Ya hay una cita programada a esa hora")    
 
             # Validación y limpieza de comentario
             appointment.comment = appointment.comment.strip()
@@ -224,11 +262,11 @@ async def update_appointment(appointment_id: str, appointment: Appointment, requ
 async def disable_appointment(appointment_id: str,request:Request) -> dict:
         try:
             if not ObjectId.is_valid(appointment_id):
-                raise HTTPException(status_code=400, detail="Invalid appointment ID format")
+                raise HTTPException(status_code=400, detail="Formato invalido de Id")
             
             existing = coll.find_one({"_id": ObjectId(appointment_id)})
             if not existing:
-                raise HTTPException(status_code=404, detail="Appointment not found")
+                raise HTTPException(status_code=404, detail="La cita no fue encontrada")
             
             # Validar que el usuario autenticado sea el dueño de la cita o admin
             user_doc = users_coll.find_one({"email": request.state.email})
@@ -239,7 +277,7 @@ async def disable_appointment(appointment_id: str,request:Request) -> dict:
             is_admin = user_doc.get("admin", False)
 
             if not (is_owner or is_admin):
-                raise HTTPException(status_code=403, detail="Not authorized to modify this appointment")
+                raise HTTPException(status_code=403, detail="No autorizado para modificar")
 
 
             # Validar tiempo mínimo de 2 horas antes de la cita
@@ -257,7 +295,7 @@ async def disable_appointment(appointment_id: str,request:Request) -> dict:
             if appointment_datetime - datetime.utcnow() < timedelta(hours=hours_change):
                 raise HTTPException(
                     status_code=400,
-                    detail="Appointments can only be disabled at least 2 hours in advance"
+                    detail="Las citas solo se pueden deshabilitar con 2 horas de anticipación"
                 )
 
             result = coll.update_one(
@@ -266,12 +304,12 @@ async def disable_appointment(appointment_id: str,request:Request) -> dict:
             )
 
             if result.modified_count == 0:
-                raise HTTPException(status_code=400, detail="No changes were made")
+                raise HTTPException(status_code=400, detail="No se hicieron cambios")
 
-            return {"message": "Appointment successfully disabled"}
+            return {"message": "La cita ya fue deshabilitada "}
 
         except HTTPException:
             raise
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Error disabling appointment: {str(e)}")    
+            raise HTTPException(status_code=500, detail=f"Error deshabilitando la cita: {str(e)}")    
                 

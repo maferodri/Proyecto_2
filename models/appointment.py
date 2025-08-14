@@ -38,7 +38,7 @@ class Appointment(BaseModel):
     @classmethod
     def validate_future_date(cls, v):
         if v < datetime.utcnow():
-            raise ValueError("The appointment date can't be in the past")
+            raise ValueError("La cita no puede estar en el pasado")
         return v
     
     

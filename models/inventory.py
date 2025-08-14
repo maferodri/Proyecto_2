@@ -13,7 +13,7 @@ class Inventory(BaseModel):
 
     name: str = Field(
         description="Inventory item name",
-        pattern=r"^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ' -]+$",
+        pattern = r"^[0-9A-Za-zÁÉÍÓÚÜÑáéíóúüñ' -]+$",
         examples=["iPhone 14 Pro", "Laptop XPS 13"]
     )
 

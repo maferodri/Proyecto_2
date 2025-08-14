@@ -61,16 +61,26 @@ async def update_inventory_type(inv_type_id: str, inv_type: InventoryType) -> In
 
 async def deactivate_inventory_type(inv_type_id: str) -> dict:
     try:
-        pipeline = validate_type_is_assigned_pipeline(inv_type_id)
+        if not ObjectId.is_valid(inv_type_id):
+            raise HTTPException(status_code=400, detail="Invalid inventory type ID")
+
+        # 🔹 Usar pipeline que incluye number_of_items
+        pipeline = [{"$match": {"_id": ObjectId(inv_type_id)}}] + get_inventory_type_pipeline()
         assigned = list(coll.aggregate(pipeline))
-        if assigned is None:
+
+        if not assigned:
             raise HTTPException(status_code=404, detail="Inventory type not found")
 
-        if assigned and assigned[0]["number_of_items"] > 0:
+        number_of_items = assigned[0].get("number_of_items", 0)
+
+        if number_of_items > 0:
             coll.update_one({"_id": ObjectId(inv_type_id)}, {"$set": {"active": False}})
             return {"message": "Inventory type is assigned to items and has been deactivated"}
         else:
             coll.delete_one({"_id": ObjectId(inv_type_id)})
             return {"message": "Inventory type deleted successfully"}
+
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error deactivating inventory type: {str(e)}")

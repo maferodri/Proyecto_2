@@ -12,7 +12,7 @@ from utils.security import validate_user, validate_admin
 router = APIRouter(tags=["🏷️ Inventory Types"])
 
 @router.post("/inventorytypes", response_model=InventoryType)
-@validate_admin
+@validate_user
 async def create_inventory_type_endpoint(request: Request, inv_type: InventoryType) -> InventoryType:
     return await create_inventory_type(inv_type)
 
@@ -27,11 +27,11 @@ async def get_inventory_type_by_id_endpoint(request: Request, inv_type_id: str) 
     return await get_inventory_type_by_id(inv_type_id)
 
 @router.put("/inventorytypes/{inv_type_id}", response_model=InventoryType)
-@validate_admin
+@validate_user
 async def update_inventory_type_endpoint(request: Request, inv_type_id: str, inv_type: InventoryType) -> InventoryType:
     return await update_inventory_type(inv_type_id, inv_type)
 
 @router.delete("/inventorytypes/{inv_type_id}", response_model=dict)
-@validate_admin
+@validate_user
 async def deactivate_inventory_type_endpoint(request: Request, inv_type_id: str) -> dict:
     return await deactivate_inventory_type(inv_type_id)

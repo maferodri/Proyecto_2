@@ -64,6 +64,7 @@ async def create_user( user: User ) -> User:
             name=user.name
             , lastname=user.lastname
             , email=user.email
+            , phone=user.phone
             , password=user.password
         )
 

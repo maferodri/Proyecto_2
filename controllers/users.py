@@ -58,7 +58,7 @@ async def create_user( user: User ) -> User:
         )
 
     try:
-        coll = get_collection("users")
+        coll = get_collection("Users")
 
         new_user = User(
             name=user.name
@@ -69,7 +69,10 @@ async def create_user( user: User ) -> User:
         )
 
         user_dict = new_user.model_dump(exclude={"id", "password"})
+        print(str(user_dict))
         inserted = coll.insert_one(user_dict)
+        # logging(inserted)
+        
         new_user.id = str(inserted.inserted_id)
         new_user.password = "*********"  # Mask the password in the response
         return new_user
